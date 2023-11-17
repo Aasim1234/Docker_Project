@@ -1,0 +1,49 @@
+PUSHING:
+
+pipeline {
+    agent any 
+    
+    stages {
+        stage('checkout') {
+            steps {
+                git 'https://github.com/Aasim1234/Docker_Project.git'
+            }
+        }
+        stage('build') {
+            steps {
+                sh 'docker build -t $img .'
+            }
+        }
+        stage('tag') {
+            steps {
+                sh 'docker tag $img $repo'
+            }
+        }
+        stage('push') {
+            steps {
+                sh 'docker login -u aasimrazamorshi -p Aasim@1234'
+                sh 'docker push $repo'
+            }
+        }
+    }
+}
+
+
+DEPLOYMENT:
+
+pipeline {
+    agent any
+
+    stages {
+        stage('check') {
+            steps {
+                git 'https://github.com/Aasim1234/Docker_Project.git'
+            }
+        }
+        stage('stack') {
+            steps {
+                sh 'docker stack deploy -c docker-compose.yml courses'
+            }
+        }
+    }
+}
