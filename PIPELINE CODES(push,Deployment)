@@ -1,49 +1,60 @@
-PUSHING:
-
-pipeline {
-    agent any 
-    
-    stages {
-        stage('checkout') {
-            steps {
-                git 'https://github.com/Aasim1234/Docker_Project.git'
-            }
-        }
-        stage('build') {
-            steps {
-                sh 'docker build -t $img .'
-            }
-        }
-        stage('tag') {
-            steps {
-                sh 'docker tag $img $repo'
-            }
-        }
-        stage('push') {
-            steps {
-                sh 'docker login -u aasimrazamorshi -p Aasim@1234'
-                sh 'docker push $repo'
-            }
-        }
-    }
-}
-
-
-DEPLOYMENT:
-
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = 'my-portfolio'
+        IMAGE_TAG = 'latest'
+        DOCKER_HUB_CREDENTIALS = 'Dockerhub'
+    }
+
     stages {
-        stage('check') {
+        stage('Checkout') {
             steps {
                 git 'https://github.com/Aasim1234/Docker_Project.git'
             }
         }
-        stage('stack') {
+
+        stage('Build Docker Image') {
             steps {
-                sh 'docker stack deploy -c docker-compose.yml courses'
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
             }
+        }
+
+        stage('Test') {
+            steps {
+                script {
+                    // Add your testing commands here
+                    echo 'Running tests...'
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_HUB_CREDENTIALS) {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    // Deploy your Docker container
+                    sh 'docker run -d -p 8082:80 my-portfolio'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up...'
+            // Clean up commands here
         }
     }
 }
